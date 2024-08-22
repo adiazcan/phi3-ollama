@@ -7,7 +7,7 @@ using Microsoft.SemanticKernel;
 using Microsoft.SemanticKernel.ChatCompletion;
 using Microsoft.SemanticKernel.Connectors.OpenAI;
 
-var modelId = "phi3";
+var modelId = "phi3.5";
 var endpoint = new Uri("http://localhost:11434");
 
 var builder = Kernel.CreateBuilder();
@@ -38,21 +38,26 @@ var chatHistory = new ChatHistory();
 //                 No te inventes la respuesta
 //                 Se creativo y divertido en tus respuestas. No seas verboso ofreciendo ayuda o nuevas preguntas.");
 
-chatHistory.AddSystemMessage(@"You are an Intent expert. 
+var systemPrompt = @"<|system|>
+                    <<BEGIN INSTRUCTION>>
+                    The following is a conversation with an AI assistant. 
                     The assistant can manage a robot with simple commands.
                     The following commands are supported: 
-                    - <<WORK>> - this function puts the robot to work
-                    - <<DANCE>> - this function puts the robot to dance
-                    - <<SALUTE>> - this function asks the robot to greet
-                    - <<FASTER>> - this function puts the robot to work faster
-                    - <<BYE>> - this function asks the robot to say goodbye
-                    - <<STOP>> - this function stops the robot
-                    - <<GYM>> - this function puts the robot to do gym
-                    - <<NOTIFY>> - this function sends a notification to the responsible
-                    - <<MUSIC>> - this function asks the robot to play music
-                Always respond with the command name. If the command is not found, respond with the message ""<<SEARCH>>""
-                Only respond with the command name, nothing more.
-");
+                    - @@WORK@@ - this function puts the robot to work
+                    - @@DANCE@@ - this function puts the robot to dance
+                    - @@SALUTE@@ - this function asks the robot to greet
+                    - @@FASTER@@ - this function puts the robot to work faster
+                    - @@BYE@@ - this function asks the robot to say goodbye
+                    - @@STOP@@ - this function stops the robot
+                    - @@GYM@@ - this function puts the robot to do gym
+                    - @@NOTIFY@@ - this function sends a notification to the responsible
+                    - @@MUSIC@@ - this function asks the robot to play music
+                Always respond with the command name. If the command is not found, respond with the message ""@@SEARCH@@"".
+                <<END INSTRUCTION>>
+                <|end|>
+";
+
+chatHistory.AddSystemMessage(systemPrompt);
 
 // Start the conversation
 while (true)
@@ -62,16 +67,8 @@ while (true)
     Console.Write("User > ");
     var question = Console.ReadLine()!;
 
+    question = "<|user|>" + question + "<|end|>";
     chatHistory.AddUserMessage(question);
-
-    // var result = chatCompletionService.GetStreamingChatMessageContentsAsync(chatHistory, openAIPromptExecutionSettings, kernel);
-
-    // Console.Write("\nAssistant > ");
-    // await foreach (var message in result)
-    // {
-    //     Console.ForegroundColor = ConsoleColor.Green;
-    //     Console.Write(message);
-    // }
 
     var result = await chatCompletionService.GetChatMessageContentsAsync(chatHistory, openAIPromptExecutionSettings, kernel);
 
